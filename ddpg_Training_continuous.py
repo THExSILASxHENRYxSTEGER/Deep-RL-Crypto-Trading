@@ -50,7 +50,7 @@ for q_func_params in [{"q_func_type":"CNN", "n_episodes":180}, {"q_func_type":"L
             actor = ACTOR(crncy_encoders, action_space)
             critic = CRITIC(crncy_encoders, action_space)
 
-            random_process = OrnsteinUhlenbeckProcess(theta=0.1, mu=0.0, sigma=0.15, size=action_space)
+            random_process = OrnsteinUhlenbeckProcess(theta=0.2, mu=0.0, sigma=0.25, size=action_space)
 
             agent = DDPG_AGENT(actor, critic, EPSILON, DEVICE, random_process, gamma=gamma, value_loss_fn=nn.HuberLoss)
             buffer = ReplayBuffer_DDPG(int(4*episode_len), BATCH_SIZE, DEVICE, action_space)
