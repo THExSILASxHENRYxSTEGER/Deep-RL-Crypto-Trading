@@ -12,7 +12,7 @@ from copy import deepcopy
 
 intfc = Interface()
 
-for q_func_params in [{"q_func_type":"CNN", "n_episodes":50}, {"q_func_type":"LSTM", "n_episodes":50}]:
+for q_func_params in [{"q_func_type":"CNN", "n_episodes":180}, {"q_func_type":"LSTM", "n_episodes":100}]:
     for explore_frac in reversed([0.3, 0.6, 0.9]):
         for gamma in [0.33, 0.66, 0.99]:
 
