@@ -52,7 +52,7 @@ for q_func_params in [{"q_func_type":"CNN", "n_episodes":50}, {"q_func_type":"LS
 
             random_process = OrnsteinUhlenbeckProcess(theta=0.1, mu=0.0, sigma=0.15, size=action_space)
 
-            agent = DDPG_AGENT(actor, critic, EPSILON, DEVICE, random_process, gamma=gamma)
+            agent = DDPG_AGENT(actor, critic, EPSILON, DEVICE, random_process, gamma=gamma, value_loss_fn=nn.HuberLoss)
             buffer = ReplayBuffer_DDPG(int(4*episode_len), BATCH_SIZE, DEVICE, action_space)
 
             sum_rewards, avg_rewards = list(), list()
