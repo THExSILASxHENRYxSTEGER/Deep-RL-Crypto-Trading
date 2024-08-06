@@ -7,20 +7,20 @@ from datetime import datetime
 
 plot = False
 
-def get_macd_cum_rtrns(set_type="train", interval="1h"):
+def get_macd_cum_rtrns(set_type="train", interval="1h", S=12, L=26, p_timescale=63, q_timescale=252, action_scale=0.99):
     intrfc = Interface()
     train_data = intrfc.get_set_type_dataset(set_type, interval)
     gnrl_train_data, spcfc_train_data = intrfc.get_overall_data_and_ticker_dicts(train_data)
     prcs = {key:list(spcfc_train_data[key]["close"]) for key in spcfc_train_data.keys()}
     train_prcs = pd.DataFrame(prcs)
-    macd = MACD()
+    macd = MACD(S=S, L=L, p_timescale=p_timescale, q_timescale=q_timescale, action_scale=action_scale)
     macd_ts = macd.calculate_macd(train_prcs)
     A_ts = macd.calculate_actions(macd_ts)
     rtrns = macd.get_rtrns(list(prcs.values()))
     weights = Interface.prtflio_weights_from_actions(np.array(A_ts))
     cum_rtrns = Interface.avg_weighted_cum_rtrns(weights, rtrns, BINANCE_TRANSACTION_COST)
     len_diffrnc = len(gnrl_train_data["open_time"])-len(cum_rtrns)
-    return np.concatenate([np.zeros(len_diffrnc), cum_rtrns]), [datetime.fromtimestamp(ts) for ts in gnrl_train_data["open_time"]]
+    return np.concatenate([np.zeros(len_diffrnc-1), cum_rtrns]), [datetime.fromtimestamp(ts) for ts in gnrl_train_data["open_time"]][1:]
 
 if plot == True:
     for set_type in SET_TYPE_ENCODING.keys():

@@ -9,7 +9,7 @@ from datetime import datetime
 
 plot_cum_rtrns = False
 
-def cum_rtrns_DDPG(actor_path, set_type="train"):
+def get_rtrns_DDPG(actor_path, set_type="train"):
     intfc = Interface()
     env = ENVIRONMENT_DDPG(intfc, set_type=set_type, interval="1h", make_rtrns=False)
     actor = load_ddpg_actor(actor_path, eval=True)
@@ -26,7 +26,7 @@ def cum_rtrns_DDPG(actor_path, set_type="train"):
         plt.plot(range(len(actions[i])), actions[i])
         plt.show()
 
-def cum_rtrns_DQN(q_func_path, set_type="train", interval="1h"):
+def get_rtrns_DQN(q_func_path, set_type="train", interval="1h"):
     intfc = Interface()
     env = ENVIRONMENT_DQN(intfc, set_type=set_type, interval=interval, make_rtrns=False)
     windows_t0 = env.windows[0]
@@ -74,7 +74,7 @@ def cum_rtrns_DQN(q_func_path, set_type="train", interval="1h"):
     absolute_rtrns = np.sum(np.array(absolute_rtrns), axis=0)
 
     cum_rtrns = Interface.avg_weighted_cum_rtrns(weights, rtrns)
-    filler = np.zeros(window_len-1)
+    filler = np.zeros(window_len)
     cum_rtrns = np.concatenate([filler, cum_rtrns])
     return cum_rtrns, absolute_rtrns
 
@@ -88,7 +88,7 @@ def get_time_labels(set_type="train", interval="1h"):
     intrfc = Interface()
     train_data = intrfc.get_set_type_dataset(set_type, interval)
     gnrl_train_data, _ = intrfc.get_overall_data_and_ticker_dicts(train_data)
-    return [datetime.fromtimestamp(ts) for ts in gnrl_train_data["open_time"]]
+    return [datetime.fromtimestamp(ts) for ts in gnrl_train_data["open_time"]][1:] # skip last because of returns and not prices
 
 def plot_multiple_time_series(multiple_time_series, timeline, title, series_labels, y_axis_label):
     plt.xticks(rotation=25)
