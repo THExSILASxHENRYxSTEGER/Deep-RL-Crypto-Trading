@@ -9,17 +9,17 @@ import numpy as np
 
 class BuyAndHold():
 
-    def __init__(self, interval="1h") -> None:
+    def __init__(self, interval="1h", cut_intrvl=0) -> None:
         intrfc = Interface()
         subsets = [intrfc.get_set_type_dataset(set_type, interval) for set_type in SET_TYPE_ENCODING.keys()]
         self.timeframes, prcs_ds = list(), list()
         for sbst in subsets:
             gnrl, spcfc = intrfc.get_overall_data_and_ticker_dicts(sbst)
-            tmfrm = [datetime.fromtimestamp(stmp) for stmp in gnrl["open_time"]][1:]
+            tmfrm = [datetime.fromtimestamp(stmp) for stmp in gnrl["open_time"]][1+cut_intrvl:]
             self.timeframes.append(tmfrm)
             prcs_ds.append([list(spcfc[key]["close"]) for key in spcfc.keys()])
         self.prcs_ds = prcs_ds
-        self.rtrns = [np.array([Interface.make_prices_to_returns(prc_srs) for prc_srs in prcs]) for prcs in prcs_ds]
+        self.rtrns = [np.array([Interface.make_prices_to_returns(prc_srs)[cut_intrvl:] for prc_srs in prcs]) for prcs in prcs_ds]
         self.weights = list()
         for rtrns in self.rtrns:
             n, T = rtrns.shape
@@ -32,6 +32,15 @@ class BuyAndHold():
         self.avg_rtrns = [Interface.avg_weighted_cum_rtrns(weights, rtrns)[1:] for rtrns, weights in zip(self.rtrns, self.weights)]
         self.cum_rtrns = [Interface.avg_weighted_cum_rtrns(weights, rtrns, only_cumulative=True).T[:,1:] for rtrns, weights in zip(self.rtrns, self.weights)]
    
+    def get_abs_rtrns(self, cutoff=0):
+        n = len(self.rtrns[0])
+        abs_rtrns = list()
+        for rtrns in self.rtrns:
+            weighted_rtrns = rtrns/n
+            sum_rtrns = np.sum(weighted_rtrns, axis=0)[cutoff:]
+            abs_rtrns.append(sum_rtrns)
+        return abs_rtrns
+
     def get_avg_returns(self): # returns in this order the train-, test-, validation- set average cumulative returns
         return self.avg_rtrns
     
@@ -57,7 +66,7 @@ class BuyAndHold():
 
 class MACD:
     
-    def __init__(self, S=12, L=26, p_timescale=63, q_timescale=252, action_scale=0.89) -> None:
+    def __init__(self, S=12, L=26, p_timescale=MACD_P_TIME_SCALE, q_timescale=MACD_Q_TIME_SCALE, action_scale=0.89) -> None:
         self.S = S
         self.L = L
         self.p_timescale = p_timescale
@@ -91,7 +100,7 @@ class MACD:
     def n_day_rolling_std(series:iter ,window:int):
         assert len(series) > window, "Window is bigger than the length of the data series"
         q_t = list()
-        for j in range(len(series)-window+1): 
+        for j in range(len(series)-window+1):
             rolling_std = np.std(series[j:j+window])
             q_t.append(series[j+window-1]/rolling_std)
         return q_t

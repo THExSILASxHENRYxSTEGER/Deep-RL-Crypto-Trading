@@ -19,8 +19,8 @@ def get_macd_cum_rtrns(set_type="train", interval="1h", S=12, L=26, p_timescale=
     rtrns = macd.get_rtrns(list(prcs.values()))
     weights = Interface.prtflio_weights_from_actions(np.array(A_ts))
     cum_rtrns = Interface.avg_weighted_cum_rtrns(weights, rtrns, BINANCE_TRANSACTION_COST)
-    len_diffrnc = len(gnrl_train_data["open_time"])-len(cum_rtrns)
-    return np.concatenate([np.zeros(len_diffrnc-1), cum_rtrns]), [datetime.fromtimestamp(ts) for ts in gnrl_train_data["open_time"]][1:]
+    abs_rtrns = np.sum(weights[1:,:-1]*rtrns, axis=0)
+    return np.array(cum_rtrns), abs_rtrns #[datetime.fromtimestamp(ts) for ts in gnrl_train_data["open_time"]][1:]
 
 if plot == True:
     for set_type in SET_TYPE_ENCODING.keys():
