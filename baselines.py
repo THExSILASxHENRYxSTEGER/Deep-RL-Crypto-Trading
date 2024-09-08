@@ -32,12 +32,12 @@ class BuyAndHold():
         self.avg_rtrns = [Interface.avg_weighted_cum_rtrns(weights, rtrns)[1:] for rtrns, weights in zip(self.rtrns, self.weights)]
         self.cum_rtrns = [Interface.avg_weighted_cum_rtrns(weights, rtrns, only_cumulative=True).T[:,1:] for rtrns, weights in zip(self.rtrns, self.weights)]
    
-    def get_abs_rtrns(self, cutoff=0):
+    def get_abs_rtrns(self):
         n = len(self.rtrns[0])
         abs_rtrns = list()
         for rtrns in self.rtrns:
             weighted_rtrns = rtrns/n
-            sum_rtrns = np.sum(weighted_rtrns, axis=0)[cutoff:]
+            sum_rtrns = np.sum(weighted_rtrns, axis=0)[1:]
             abs_rtrns.append(sum_rtrns)
         return abs_rtrns
 

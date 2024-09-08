@@ -47,7 +47,7 @@ class Interface:
         return gnrl_data, ticker_dicts
 
     @staticmethod
-    def plot_rtrns(rtrns, timeline, title, cum=True, labels=TICKERS):
+    def plot_rtrns(rtrns, timeline, title, cum=True, labels=TICKERS, print_title=False):
         plt.xticks(rotation=25)
         if cum:
             plt.plot(timeline, rtrns)
@@ -55,8 +55,9 @@ class Interface:
             for rtrn, lbl in zip(rtrns, labels):
                 plt.plot(timeline, rtrn, label=lbl)
             plt.legend() 
-        plt.title(title)
-        plt.xlabel("date")
+        if print_title:
+            plt.title(title)
+        plt.xlabel("time")
         plt.ylabel("cumulative return")
         plt.show()        
     
@@ -126,5 +127,8 @@ class Interface:
             prev_ws = deepcopy(crnt_ws)
         if only_cumulative:
             return np.array(np.array(cum_rtrns))-1/(n-1)
-        cum_rtrns = np.sum(np.array(cum_rtrns), axis=1)-1
+        if np.where(np.array(cum_rtrns)!=0)[0].size > 0: # if all are zero no need to deduct the one
+            cum_rtrns = np.sum(np.array(cum_rtrns), axis=1)-1
+        else:
+            cum_rtrns = np.sum(np.array(cum_rtrns), axis=1) #!!!!!!!!!!!! delete if cause for issues
         return cum_rtrns

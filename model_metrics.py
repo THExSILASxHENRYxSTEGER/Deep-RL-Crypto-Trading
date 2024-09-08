@@ -25,7 +25,7 @@ def get_rtrns_DDPG(actor_path, set_type="train", interval="1h", cut_intrvl=0):
     actions = np.squeeze(np.array(actions)).T
     actions = actions[:, cut_intrvl:]
     weighting_t = np.zeros(len(TICKERS)+1)
-    weighting_t[len(weighting_t)-1] = 1.0
+    weighting_t[len(weighting_t)-1] = 1.0   # !!!!!!!!!!! check whether this actually is as supposed to be
     actions[np.where(actions==-1)[0]] = 0
     weights = actions/np.sum(actions, axis=0)
     _, weight_cols = actions.shape
@@ -46,7 +46,7 @@ def get_rtrns_DDPG(actor_path, set_type="train", interval="1h", cut_intrvl=0):
     absolute_rtrns = np.sum(np.array(absolute_rtrns), axis=0)
 
     cum_rtrns = Interface.avg_weighted_cum_rtrns(weights, rtrns)
-    return cum_rtrns, absolute_rtrns
+    return cum_rtrns[1:], absolute_rtrns[1:]
 
 def get_rtrns_DQN(q_func_path, set_type="train", interval="1h", cut_intrvl=0):
     intfc = Interface()
@@ -101,11 +101,14 @@ def get_rtrns_DQN(q_func_path, set_type="train", interval="1h", cut_intrvl=0):
     #cum_rtrns = np.concatenate([filler, cum_rtrns])
     return cum_rtrns, absolute_rtrns
 
-def sharpe_ratio_time_series(rtrns):
-    sharpe_ratios = list()
-    for i in range(len(rtrns)):
-        sharpe_ratios.append(np.mean(rtrns[0:i+2])/np.std(rtrns[0:i+2]))
-    return sharpe_ratios
+def print_rtrn_mu_sigma_sharpe_ratio(rtrns, time_series_label=""):
+    print(f"Cumulative returns of {time_series_label}: {rtrns[-1]}")
+    mu = np.mean(rtrns)
+    print(f"Mean of {time_series_label}: {mu}")
+    sigma = np.std(rtrns)
+    print(f"Std of {time_series_label}: {sigma}")
+    print(f"The sharpe ratio {time_series_label}: {mu/sigma}")
+    print()
 
 def get_time_labels(set_type="train", interval="1h"):
     intrfc = Interface()
@@ -113,17 +116,20 @@ def get_time_labels(set_type="train", interval="1h"):
     gnrl_train_data, _ = intrfc.get_overall_data_and_ticker_dicts(train_data)
     return [datetime.fromtimestamp(ts) for ts in gnrl_train_data["open_time"]][1:] # skip last because of returns and not prices
 
-def multiple_regression(time, lines, time_pred, labels, xlabel, ylabel):
+def multiple_regression(time, lines, labels, xlabel, ylabel):
     # get predictions
     regrs = [linear_model.LinearRegression() for _ in range(len(lines))]
     preds = list()
+    time_pred = np.array([i for i in range(len(time))])
+    print("Regression parameters:\n")
     for i in range(len(lines)):
-        v = lines[i]
-        regrs[i].fit(time.reshape(-1, 1), lines[i].reshape(-1, 1))
+        regrs[i].fit(time_pred.reshape(-1, 1), lines[i].reshape(-1, 1))
         preds.append(regrs[i].predict(time_pred.reshape(-1, 1)))
+        print(f"{labels[i]} coef: {regrs[i].coef_}, intercept: {regrs[i].intercept_}")
+    print()
     # plot results
     for i in range(len(lines)):
-        plt.plot(time_pred, preds[i], label=labels[i])
+        plt.plot(time, preds[i], label=labels[i])
     plt.xlabel(xlabel)
     plt.xticks(rotation=25)
     plt.ylabel(ylabel)
